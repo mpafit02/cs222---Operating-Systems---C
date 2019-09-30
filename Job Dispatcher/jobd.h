@@ -4,7 +4,7 @@
 #ifndef JOBD_H
 #define JOBD_H
 
-#define POLL_JOB_INTERVAL 5 // Poll for waiting jobs every 10 secs. Every 10 secs checks for new jobs.
+#define POLL_JOB_INTERVAL 10 // Poll for waiting jobs every 10 secs. Every 10 secs checks for new jobs.
 #define POLL_CMD_INTERVAL 5  // Poll for status cmds every 5 secs.
 #define JOBD_PREFIX "jobd__out__"
 #define JOBD_QUEUE_MAX 500

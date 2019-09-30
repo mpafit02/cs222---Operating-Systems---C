@@ -9,7 +9,7 @@ PROJ = jobd # the name of the project
 CC = gcc # name of compiler
 DOXYGEN = doxygen # name of doxygen binary
 # define any compile-time flags
-CFLAGS = -std=c99 -Wall -O -Wuninitialized -Wunreachable-code -pedantic # there is a space at the end of this
+CFLAGS = -Wall -O -Wuninitialized -Wunreachable-code -pedantic # there is a space at the end of this
 LFLAGS = -lm
 ###############################################
 # You don't need to edit anything below this line

@@ -10,6 +10,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <dirent.h>
+#include <time.h>
 
 const char *jobd_fifo = "./EPL222_HW1/comm.txt";
 const char *jobd_in_dir = "./EPL222_HW1/jobs/";
@@ -75,7 +76,9 @@ void jobd_dir_check(const char *dir)
 }
 
 void jobd_dispatcher(int sig){
-    printf("Check\n");
+     time_t t;
+     time(&t);
+    printf("Check: %s",ctime(&t));
     jobd_dir_check(jobd_in_dir);
     // Schedule alarm value
     alarm(POLL_JOB_INTERVAL);
@@ -84,15 +87,14 @@ void jobd_dispatcher(int sig){
 int jobd_dispatch(char *jobname){
     //printf("Filename: %s\n", jobname);
 
-    char com[100] = "";
+    char com[100];
     strcpy(com, jobd_in_dir);
     strcat(com, jobname);
 
     // Give execute permissions to the file
     chmod(com, 0777);
 
-    char command[100] = "";
-    strcat(command,"sh ");
+    char command[100] = "sh ";
     strcat(command,com);
 
     // Execute the file
@@ -109,6 +111,9 @@ int jobd_dispatch(char *jobname){
     int status_exe = system(command);
 
     job_id++;
+    if(job_id == JOBD_QUEUE_MAX){
+        job_id = 0;
+    }
 
     // Delete the original script from job_in_dir
     remove(com);
@@ -142,6 +147,16 @@ void jobd_finalize(void)
     system(deleteCommand);
 }
 
+void jobd_handle_msg(char *msg){
+    printf("%s",msg);
+}
+
+char *get_msg(){
+     time_t t;
+     time(&t);
+     return ctime(&t);
+} 
+
 int main()
 {
     jobd_init();
@@ -152,6 +167,16 @@ int main()
     // Schedule alarm value
     alarm(POLL_JOB_INTERVAL);
 
+    int quit = 0;
+    while(!quit){
+        sleep(POLL_CMD_INTERVAL);
+        char msg[10];
+	strcpy(msg,get_msg());
+        if(strcmp(msg, "Q:") == 0){
+            quit = 1;
+	} 
+        jobd_handle_msg(msg);
+    }
     // Do not proceed until signal is handledAlarm clock
     while(1){
         pause();
