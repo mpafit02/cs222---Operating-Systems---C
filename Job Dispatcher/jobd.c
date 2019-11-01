@@ -44,7 +44,7 @@ int jobd_daemonize(void)
 
     /* Change the file mode mask */
     umask(0);
- 
+
     close(STDIN_FILENO);
     close(STDERR_FILENO);
 
@@ -61,7 +61,7 @@ void jobd_init(void)
     mkdir(jobd_out_dir, 0777);
 
     /* Create the named pipe */
-    mkfifo(jobd_fifo,0777);
+    mkfifo(jobd_fifo, 0777);
 
     signal(SIGALRM, jobd_dispatcher);
 
@@ -80,7 +80,7 @@ void jobd_finalize(void)
 
     /* Delete all the files in the out directory */
     /*sprintf(deleteComm, "exec rm -f %s",jobd_fifo);*/
-    sprintf(deleteOut, "exec rm -f %s*",jobd_out_dir);
+    sprintf(deleteOut, "exec rm -f %s*", jobd_out_dir);
 
     system(deleteOut);
     /*system(deleteComm);*/
@@ -97,18 +97,19 @@ void jobd_dir_check(const char *dir)
         /* Print all the files in the directory */
         while ((dp = readdir(dirp)) != NULL)
         {
-	    if(strcmp(dp->d_name,".") == 0 || strcmp(dp->d_name,"..") == 0){
-	       continue;
+            if (strcmp(dp->d_name, ".") == 0 || strcmp(dp->d_name, "..") == 0)
+            {
+                continue;
             }
             jobd_dispatch(dp->d_name);
         }
         /* printf("Done\n"); */
         closedir(dirp);
     }
-
 }
 
-void jobd_dispatcher(int sig){
+void jobd_dispatcher(int sig)
+{
     time_t t;
     time(&t);
     /* printf("Check: %s\n",ctime(&t)); */
@@ -118,19 +119,20 @@ void jobd_dispatcher(int sig){
     alarm(POLL_JOB_INTERVAL);
 }
 
-int jobd_dispatch(char *jobname){
+int jobd_dispatch(char *jobname)
+{
     /* printf("Filename: %s\n", jobname); */
 
     char exe_command[100];
     char job_command[100];
-    int status_exe;       
+    int status_exe;
 
-    sprintf(job_command, "%s%s",jobd_in_dir, jobname);
+    sprintf(job_command, "%s%s", jobd_in_dir, jobname);
 
     /* Give execute permissions to the file */
     chmod(job_command, 0777);
 
-    sprintf(exe_command, "%s%s &> %s%s%d.txt",jobd_in_dir, jobname,jobd_out_dir, JOBD_PREFIX, job_id);
+    sprintf(exe_command, "%s%s &> %s%s%d.txt", jobd_in_dir, jobname, jobd_out_dir, JOBD_PREFIX, job_id);
 
     /* printf("Job command: %s\n", job_command); */
 
@@ -140,7 +142,8 @@ int jobd_dispatch(char *jobname){
     status_exe = system(exe_command);
 
     job_id++;
-    if(job_id == JOBD_QUEUE_MAX){
+    if (job_id == JOBD_QUEUE_MAX)
+    {
         job_id = 0;
     }
 
@@ -150,28 +153,29 @@ int jobd_dispatch(char *jobname){
     return status_exe;
 }
 
-
-
-void jobd_handle_msg(char *msg){
+void jobd_handle_msg(char *msg)
+{
     char delim[2];
     int num;
     char readOutput[100];
     char *ptr;
-    
+
     strcpy(delim, "\n");
-    
-    if(strcmp(msg, "") != 0){
-       ptr = strtok(msg,delim);
-       while(ptr != NULL && strlen(ptr) > 2){
-           /* printf("%s\n",ptr); */
-           sscanf(ptr, "S:%d", &num);
-    
-           sprintf(readOutput,"cat %sjobd__out__%d.txt",jobd_out_dir, num); 
-           /* printf("Read output: %s\n",readOutput); */
-   
-           system(readOutput);
-           ptr = strtok(NULL,delim);
-       }
+
+    if (strcmp(msg, "") != 0)
+    {
+        ptr = strtok(msg, delim);
+        while (ptr != NULL && strlen(ptr) > 2)
+        {
+            /* printf("%s\n",ptr); */
+            sscanf(ptr, "S:%d", &num);
+
+            sprintf(readOutput, "cat %sjobd__out__%d.txt", jobd_out_dir, num);
+            /* printf("Read output: %s\n",readOutput); */
+
+            system(readOutput);
+            ptr = strtok(NULL, delim);
+        }
     }
 }
 
@@ -180,41 +184,47 @@ int main()
     int quit;
     int fp;
     char fifo_msg[80];
-    
+
     jobd_init();
 
     /* Set up alarm handler */
     quit = 0;
-    
-    /* Open FIFO in read only mode*/
-    fp = open(jobd_fifo,O_RDONLY);
 
-    while(!quit){
-        
+    /* Open FIFO in read only mode*/
+    fp = open(jobd_fifo, O_RDONLY);
+
+    while (!quit)
+    {
+
         /* time_t t;
         time(&t);
         printf("FIFO: %s\n",ctime(&t)); */
-            
+
         sleep(POLL_CMD_INTERVAL);
 
         strcpy(fifo_msg, "Start");
-        while(strcmp(fifo_msg ,"") != 0){
+        while (strcmp(fifo_msg, "") != 0)
+        {
             strcpy(fifo_msg, "");
             /* Read FIFO */
-            read(fp,fifo_msg,80);
-            if(fifo_msg[0] == 'Q' && fifo_msg[1] == ':' && fifo_msg[2] == '\n'){
+            read(fp, fifo_msg, 80);
+            if (fifo_msg[0] == 'Q' && fifo_msg[1] == ':' && fifo_msg[2] == '\n')
+            {
                 quit = 1;
                 break;
-            }else{
+            }
+            else
+            {
                 /* Print the read string and close */
                 /* printf("FIFO: %s\n",fifo_msg); */
                 jobd_handle_msg(fifo_msg);
-	    } 
+            }
         }
     }
     close(fp);
     /* Do not proceed until signal is handledAlarm clock */
-    while(!quit){
+    while (!quit)
+    {
         pause();
     }
 
@@ -223,7 +233,3 @@ int main()
 
     return 0;
 }
-
-
-
-
